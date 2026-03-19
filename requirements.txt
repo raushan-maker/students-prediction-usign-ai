@@ -8,3 +8,4 @@ scipy
 joblib
 pickle-mixin
 gunicorn
+plotly
