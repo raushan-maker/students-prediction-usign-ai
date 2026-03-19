@@ -1,7 +1,9 @@
 import streamlit as st
 import numpy as np
-import pickle
 import plotly.graph_objects as go
+from sklearn.tree import
+DecisionTreeClassifier
+import pandas as pd
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="AI Student Analyzer", layout="centered")
