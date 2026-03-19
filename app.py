@@ -1,15 +1,30 @@
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
-from sklearn.tree import
-DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier
 import pandas as pd
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="AI Student Analyzer", layout="centered")
 
-# ---------------- LOAD MODEL ----------------
-model = pickle.load(open("model.pkl", "rb"))
+@st.cache_resource
+def train_model():
+    data = pd.DataFrame({
+        'math': [30,40,50,60,70,80,90],
+        'physics': [35,45,55,65,75,85,95],
+        'chemistry': [32,42,52,62,72,82,92],
+        'study_hours': [1,2,3,4,5,6,7],
+        'result': [0,0,0,1,1,1,1]
+    })
+
+    X = data[['math', 'physics', 'chemistry', 'study_hours']]
+    y = data['result']
+
+    model = DecisionTreeClassifier()
+    model.fit(X, y)
+    return model
+
+model = train_model()
 
 # ---------------- UI HEADER ----------------
 st.title("🎓 AI Student Performance Analyzer")
