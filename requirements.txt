@@ -1,6 +1,10 @@
-flask
+streamlit
 numpy
 pandas
 scikit-learn
+matplotlib
+seaborn
+scipy
+joblib
+pickle-mixin
 gunicorn
-streamlit
