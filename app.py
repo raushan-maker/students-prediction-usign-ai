@@ -1,107 +1,100 @@
-import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-from sklearn.tree import DecisionTreeClassifier
+mport streamlit as st
+import numpy as np
+import pickle
+import plotly.graph_objects as go
 
-# Page config
-st.set_page_config(page_title="Student Predictor", page_icon="🎓", layout="centered")
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(page_title="AI Student Analyzer", layout="centered")
 
-# Custom CSS (for modern look)
-st.markdown("""
-    <style>
-    .main {
-        background-color: #0e1117;
-        color: white;
-    }
-    .stButton>button {
-        background: linear-gradient(90deg, #00c6ff, #0072ff);
-        color: white;
-        border-radius: 10px;
-        height: 3em;
-        width: 100%;
-        font-size: 18px;
-    }
-    .result-pass {
-        background-color: #1f7a1f;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        font-size: 20px;
-    }
-    .result-fail {
-        background-color: #7a1f1f;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        font-size: 20px;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# ---------------- LOAD MODEL ----------------
+model = pickle.load(open("model.pkl", "rb"))
 
+# ---------------- UI HEADER ----------------
+st.title("🎓 AI Student Performance Analyzer")
+st.markdown("### 📊 Smart Dashboard with AI Suggestions")
 
-# Title
-st.title("🎓 Student Performance Predictor")
+# ---------------- INPUT SECTION ----------------
+st.subheader("📥 Enter Student Details")
 
-# Cache model
-@st.cache_resource
-def train_model():
-    data = pd.DataFrame({
-        'Study_Hours': [1,2,3,4,5,6,7,8],
-        'Attendance': [50,55,60,65,70,75,80,90],
-        'Previous_Marks': [40,45,50,55,60,65,70,80],
-        'Result': ['Fail','Fail','Fail','Pass','Pass','Pass','Pass','Pass']
-    })
+math = st.number_input("📘 Math Marks", 0, 100)
+physics = st.number_input("⚡ Physics Marks", 0, 100)
+chemistry = st.number_input("🧪 Chemistry Marks", 0, 100)
 
-    X = data[['Study_Hours', 'Attendance', 'Previous_Marks']]
-    y = data['Result']
+study_hours = st.slider("⏳ Study Hours per day", 0, 12)
 
-    model = DecisionTreeClassifier()
-    model.fit(X, y)
-    return model, data
+# ---------------- PREDICTION ----------------
+if st.button("🔍 Analyze Performance"):
 
-model, data = train_model()
+    data = np.array([[math, physics, chemistry, study_hours]])
+    prediction = model.predict(data)[0]
 
-# Inputs
-study_hours = st.slider("📚 Study Hours", 0, 12, 4)
-attendance = st.slider("📊 Attendance %", 0, 100, 75)
-previous_marks = st.slider("📝 Previous Marks", 0, 100, 60)
+    avg_marks = (math + physics + chemistry) / 3
 
-# Predict
-if st.button("🚀 Predict Result"):
+    # Fake probability (you can improve later)
+    pass_prob = min(100, int(avg_marks + study_hours * 5))
 
-    result = model.predict([[study_hours, attendance, previous_marks]])
+    # ---------------- RESULT ----------------
+    st.subheader("🎯 Result")
 
-    # Result
-    if result[0] == "Pass":
-        st.success("✅ Student will PASS 🎉")
+    if prediction == 1:
+        st.success("✅ PASS")
     else:
-        st.error("❌ Student will FAIL ⚠️")
+        st.error("❌ FAIL")
 
-    # 📊 GRAPH SECTION
-    st.subheader("📊 Performance Analysis")
+    st.info(f"📈 Pass Probability: {pass_prob}%")
 
-    fig = plt.figure()
-    values = [study_hours, attendance, previous_marks]
-    labels = ["Study Hours", "Attendance", "Previous Marks"]
+    # ---------------- GRAPH (BAR CHART) ----------------
+    st.subheader("📊 Subject-wise Performance")
 
-    plt.bar(labels, values)
-    plt.xlabel("Factors")
-    plt.ylabel("Values")
-    plt.title("Student Input Analysis")
+    fig = go.Figure(
+        data=[
+            go.Bar(
+                x=["Math", "Physics", "Chemistry"],
+                y=[math, physics, chemistry]
+            )
+        ]
+    )
 
-    st.pyplot(fig)
+    st.plotly_chart(fig)
 
-    # 🧠 AI SUGGESTIONS
+    # ---------------- RADAR CHART ----------------
+    st.subheader("📌 Performance Radar")
+
+    radar = go.Figure()
+
+    radar.add_trace(go.Scatterpolar(
+        r=[math, physics, chemistry],
+        theta=["Math", "Physics", "Chemistry"],
+        fill='toself'
+    ))
+
+    radar.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])))
+
+    st.plotly_chart(radar)
+
+    # ---------------- AI SUGGESTIONS ----------------
     st.subheader("🧠 AI Suggestions")
 
-    if study_hours < 4:
-        st.warning("👉 Increase study hours to at least 5+ hours.")
+    if math < 40:
+        st.warning("📘 Improve Mathematics – practice daily problems")
+    if physics < 40:
+        st.warning("⚡ Focus on Physics numericals")
+    if chemistry < 40:
+        st.warning("🧪 Revise Chemistry concepts")
 
-    if attendance < 75:
-        st.warning("👉 Improve attendance above 75%.")
+    if study_hours < 2:
+        st.warning("⏳ Increase study time to at least 2–3 hours/day")
 
-    if previous_marks < 60:
-        st.warning("👉 Focus on basics to improve marks.")
+    if avg_marks > 70:
+        st.success("🔥 Excellent performance! Keep it up")
 
-    if study_hours >= 5 and attendance >= 75 and previous_marks >= 60:
-        st.success("🎯 Great! You are on track for good performance.")
+    # ---------------- STUDY PLAN ----------------
+    st.subheader("📅 Suggested Study Plan")
+
+    st.write("""
+    Day 1: Math practice  
+    Day 2: Physics numericals  
+    Day 3: Chemistry revision  
+    Day 4: Mock test  
+    Repeat 🔁
+    """)
